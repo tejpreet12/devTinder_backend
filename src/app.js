@@ -3,121 +3,11 @@ const { connectDB } = require("./config/database");
 const User = require("./models/user");
 const app = express();
 
-// const {authMiddleware, userMiddleware}  = require("./middlewares/auth")
-
-// This will only handle get call for /user
-// app.get("/user", (req,res) => {
-//     res.send({
-//         firstName:'Akshay',
-//         lastName:"Saini",
-//     })
-// })
-
-// app.post("/user", (req,res) => {
-//     console.log("Data Saved to DB");
-//     res.send("Data Saved Successfully");
-// })
-
-// app.delete("/user", (req,res)=> {
-//     console.log("Deleting the user");
-//     res.send("User Deleted");
-// })
-
-// app.patch("/user", (req,res) =>{
-//     console.log("Data Updated Successfully");
-//     res.send("Data Updated")
-// })
-
-// // this will match all the Http method api calls to /test
-// app.use("/test", (req, res) => {
-//     res.send("Test Page Important");
-// })
-
-// app.use(
-//   "/user",
-//   (req, res, next) => {
-//     console.log("1 Response is printed");
-//     next();
-//     // res.send("Response 1")
-
-//   },
-// [  (req, res, next) => {
-//     console.log("2 Response is printed");
-//     // res.send("Response 2");
-//     next();
-//   },
-//   (req, res, next) => {
-//     console.log("3 Response is printed");
-//     // res.send("Response 3");
-//     next();
-//   }],
-//   (req, res, next) => {
-//     console.log("4 Response is printed");
-//     res.send("Response 4");
-//   }
-// );
-
-// app.use("/", (req, res, next) => {
-//   console.log("Middleware 1");
-//   next();
-// });
-
-// app.use(
-//   "/user",
-//   (req, res, next) => {
-//     console.log("Middleware 2");
-//     next();
-//   },
-//   (req, res) => {
-//     res.send("Actually Response");
-//   }
-// );
-
-// app.use('/admin', authMiddleware )
-
-// app.use('/admin/getAllData', (req,res) => {
-//   res.send("All Data from DB");
-// })
-
-// app.use('/admin/deleteUser', (req,res) => {
-//   res.send("User Deleted from DB");
-// })
-
-// app.use("user/login", (req,res) => {
-//   res.send("USER LOGGED IN");
-// })
-
-// app.use("/user/data", userMiddleware , (req,res) => {
-//   res.send("FROM USER");
-// })
-
-// app.get("/user", (req,res) => {
-//   try{
-//     //DB FETCHING ERROR
-//     throw new Error("Delhi");
-//   }catch(err) {
-//     res.status(500).send("HANDLED IN CATCH")
-//   }
-
-// })
-
-// app.use("/" ,(err, req,res, next) => {
-//   if(err){
-//     res.status(500).send("Issue found");
-//   }
-// })
+app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  console.log("Called")
-  const newUser = new User({
-    firstName: "Tejpreet",
-    lastName: "Singh",
-    emailId: "tej@gmail.com",
-    password: "Tej@12345",
-    age: 23,
-    gender: "Male",
-  });
-
+  console.log("Called");
+  const newUser = new User(req.body);
   try {
     await newUser.save();
     console.log("User Created Successfully");
@@ -127,6 +17,74 @@ app.post("/signup", async (req, res) => {
     res.status(401).send("Unable to create User");
   }
 });
+
+// Get user by email
+app.get("/user", async (req, res) => {
+  const email = req.body.emailId;
+
+  try {
+    const users = await User.find({ emailId: email });
+    console.log("USers", users);
+    if (users.length === 0) {
+      res.status(404).send("No Data Found");
+    } else {
+      res.send(users);
+    }
+  } catch (err) {
+    res.status(400).send("Some Error Occured");
+  }
+});
+
+// Get all users for Feed - Feed Api
+app.get("/feed", async (req, res) => {
+  try {
+    const users = await User.find({});
+    if (users.length === 0) {
+      res.status(404).send("No Data Found");
+    } else {
+      res.send(users);
+    }
+  } catch (err) {
+    res.status(400).send("Some Error Occured");
+  }
+});
+
+//delete user by ID
+app.delete("/user", async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    await User.findByIdAndDelete(userId);
+    res.send("User Deleted");
+  } catch (err) {
+    res.status(400).send("Some Error Occured");
+  }
+});
+
+//update user by Id
+app.patch("/user", async (req, res) => {
+  const userId = req.body.userId;
+  const data = req.body;
+  try {
+    await User.findByIdAndUpdate(userId,data);
+    res.send("User Update Successfully")
+
+  } catch (err) {
+    res.status(400).send("Some Error Occured");
+  }
+});
+
+//update user by email
+// app.patch("/user", async (req, res) => {
+//   const email = req.body.emailId;
+//   const data = req.body;
+//   console.log(email, "EMAIL");
+//   try {
+//     await User.findOneAndUpdate({ emailId: email }, data);
+//     res.send("User Update Successfully");
+//   } catch (err) {
+//     res.status(400).send("Some Error Occured");
+//   }
+// });
 
 connectDB()
   .then(() => {
