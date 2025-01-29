@@ -14,7 +14,7 @@ app.post("/signup", async (req, res) => {
     res.send("User Created Successfully");
   } catch (err) {
     console.log("Unable to create User");
-    res.status(401).send("Unable to create User");
+    res.status(401).send(err.message + "Unable to create User");
   }
 });
 
@@ -61,15 +61,27 @@ app.delete("/user", async (req, res) => {
 });
 
 //update user by Id
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
   const data = req.body;
   try {
-    await User.findByIdAndUpdate(userId,data);
-    res.send("User Update Successfully")
+    const ALLOWED_UPDATES = ["skills", "about", "photoUrl", "age"];
 
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATES.includes(k)
+    );
+
+    if(!isUpdateAllowed){
+      res.status(400).send("User can't update");
+    }
+
+    await User.findByIdAndUpdate(userId, data, {
+      returnDocument: "after",
+      runValidators: true,
+    });
+    res.send("User Update Successfully");
   } catch (err) {
-    res.status(400).send("Some Error Occured");
+    res.status(400).send(err.message + "Some Error Occured");
   }
 });
 
