@@ -1,20 +1,37 @@
 const express = require("express");
 const { connectDB } = require("./config/database");
 const User = require("./models/user");
+const { validateSignUpData } = require("./utils/validator");
+const bcrypt = require("bcrypt");
 const app = express();
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  console.log("Called");
-  const newUser = new User(req.body);
   try {
+    //Validation of Data
+    validateSignUpData(req);
+
+    //Encrypt the password
+    const { firstName, lastName, password, emailId } = req.body;
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log("password hash", passwordHash);
+
+    //Creating new instance of user model
+    const newUser = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+    });
+
     await newUser.save();
     console.log("User Created Successfully");
     res.send("User Created Successfully");
   } catch (err) {
     console.log("Unable to create User");
-    res.status(401).send(err.message + "Unable to create User");
+    res.status(400).send(err.message + " Unable to create User");
   }
 });
 
@@ -35,7 +52,7 @@ app.get("/user", async (req, res) => {
   }
 });
 
-// Get all users for Feed - Feed Api
+// Get all users for Feed - Feed Api`
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
@@ -71,7 +88,7 @@ app.patch("/user/:userId", async (req, res) => {
       ALLOWED_UPDATES.includes(k)
     );
 
-    if(!isUpdateAllowed){
+    if (!isUpdateAllowed) {
       res.status(400).send("User can't update");
     }
 
