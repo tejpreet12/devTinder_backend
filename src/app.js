@@ -7,6 +7,28 @@ const app = express();
 
 app.use(express.json());
 
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    const user = await User.findOne({ emailId: emailId });
+
+    if (!user) {
+      throw new Error("Invalid Credentials");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (isPasswordValid) {
+      res.send("Logged In Successfully");
+    } else {
+      throw new Error("Invalid Credentials");
+    }
+  } catch (err) {
+    res.status(400).send("ERROR : " + err.message);
+  }
+});
+
 app.post("/signup", async (req, res) => {
   try {
     //Validation of Data
@@ -37,11 +59,14 @@ app.post("/signup", async (req, res) => {
 
 // Get user by email
 app.get("/user", async (req, res) => {
-  const email = req.body.emailId;
-
   try {
+    const email = req.body.emailId;
     const users = await User.find({ emailId: email });
-    console.log("USers", users);
+    if (!email) {
+      const temp = await User.find();
+      res.send(temp);
+    }
+    console.log("Users", users);
     if (users.length === 0) {
       res.status(404).send("No Data Found");
     } else {
