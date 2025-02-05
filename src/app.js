@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const app = express();
+const {authUser} = require("./middlewares/auth")
 
 app.use(express.json());
 app.use(cookieParser());
@@ -48,15 +49,17 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid Credentials");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.comparePassword(password);
+    console.log(isPasswordValid,"IS PASSWORD VALID")
 
     if (isPasswordValid) {
       // create jwt token
-      const token = jwt.sign({ _id: user._id }, "Tejpreet@0429");
+      // we have use user b/c user is also an instance of the User Model and we need _id of this user only
+      const token = await user.getJWT();
 
       // add jwt token into the cookie
-      res.cookie("token", token);
-      res.send("Logged In Successfully");
+      // res.cookie("token", token);
+      res.send(`${token} Logged In Successfully `);
     } else {
       throw new Error("Invalid Credentials");
     }
@@ -65,24 +68,28 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
-  const cookie = req.cookies;
-  const { token } = cookie;
-  const verifyUser = jwt.verify(token, "Tejpreet@0429");
+app.get("/profile", authUser ,async (req, res) => {
 
-  console.log(verifyUser._id, "USERs");
-  if (verifyUser) {
-    try{
-      const user = await User.findById({_id:verifyUser._id });
-      console.log(user);
-      res.send(user);
-    }catch(err){
-      console.log(err.message, "BIG ERROR")
-    }
+  res.send(`${req.user}`);
+  // res.send("CONNECTED")
 
-  } else {
-    throw new Error("Invaild JWT Token");
-  }
+  // cookie approach
+  // const cookie = req.cookies;
+  // const { token } = cookie;
+  // const verifyUser = jwt.verify(token, "Tejpreet@0429");
+
+  // console.log(verifyUser._id, "USERs");
+  // if (verifyUser) {
+  //   try {
+  //     const user = await User.findById({ _id: verifyUser._id });
+  //     console.log(user);
+  //     res.send(user);
+  //   } catch (err) {
+  //     console.log(err.message, "BIG ERROR");
+  //   }
+  // } else {
+  //   throw new Error("Invaild JWT Token");
+  // }
 });
 
 // Get user by email

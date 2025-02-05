@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const userSchema = new Schema(
   {
@@ -50,7 +52,8 @@ const userSchema = new Schema(
     },
     photoUrl: {
       type: String,
-      default: "https://www.punjabkingsipl.in/static-assets/images/players/70500.png?v=6.01",
+      default:
+        "https://www.punjabkingsipl.in/static-assets/images/players/70500.png?v=6.01",
       validate(value) {
         if (!validator.isURL(value)) throw new Error("Not a valid Photo URL ");
       },
@@ -65,6 +68,25 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
+userSchema.methods.getJWT = async function () {
+  const user = this;
+  const token = await jwt.sign({ _id: user._id }, "Tejpreet@0429", {
+    expiresIn: "7d",
+  });
+
+  return token;
+};
+
+userSchema.methods.comparePassword = async function (passwordInputByUser) {
+  const user = this;
+  const passwordHash = user.password;
+  const isPasswordValid = await bcrypt.compare(
+    passwordInputByUser,
+    passwordHash
+  );
+  return isPasswordValid;
+};
 
 const UserModel = mongoose.model("User", userSchema);
 
