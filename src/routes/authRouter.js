@@ -23,7 +23,9 @@ authRouter.post("/login", async (req, res) => {
       const token = await user.getJWT();
 
       // add jwt token into the cookie
-      res.cookie("token", token);
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 3600000),
+      });
       res.send(`${token} Logged In Successfully `);
     } else {
       throw new Error("Invalid Credentials");
@@ -52,13 +54,28 @@ authRouter.post("/signup", async (req, res) => {
       password: passwordHash,
     });
 
-    await newUser.save();
+    const savedUser = await newUser.save();
+    const token = await savedUser.getJWT();
+
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 8 * 3600000),
+    });
+
     console.log("User Created Successfully");
-    res.send("User Created Successfully");
+    // res.send("User Created Successfully");
+    res.json({ message: "User Added successfully!", data: savedUser });
   } catch (err) {
     console.log("Unable to create User");
     res.status(400).send(err.message + " Unable to create User");
   }
+});
+
+authRouter.post("/logout", (req, res) => {
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
+  });
+
+  res.send("User Logged Out Successfully");
 });
 
 module.exports = { authRouter };
