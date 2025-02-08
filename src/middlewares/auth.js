@@ -1,5 +1,5 @@
 const User = require("../models/user");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
   const token = "xyz";
@@ -25,14 +25,16 @@ const userMiddleware = (req, res, next) => {
 
 const authUser = async (req, res, next) => {
   try {
-    const { token } = req.headers;
-    console.log(token,"TOKEN")
+    // const { token } = req.headers;
+    //using cookies token approach for this project 
+    const { token } = req.cookies;
+
     if (!token) {
       throw new Error("No Token Present");
     }
 
     const decryptedToken = jwt.verify(token, "Tejpreet@0429");
-    console.log(decryptedToken)
+    console.log(decryptedToken);
 
     if (!decryptedToken) {
       res.status(400).send("Invaild User");
@@ -44,7 +46,7 @@ const authUser = async (req, res, next) => {
 
     next();
   } catch (err) {
-    res.status(400).send("Error : "  +  err.message);
+    res.status(400).send("Error : " + err.message);
   }
 };
 
