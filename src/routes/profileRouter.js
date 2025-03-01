@@ -50,7 +50,7 @@ profileRouter.patch("/profile/edit", authUser, async (req, res) => {
   }
 });
 
-profileRouter.patch("/profile/password", authUser, async (req, res) => {
+profileRouter.patch("/profile/updatepassword", authUser, async (req, res) => {
   try {
     
     await validateEditPassword(req);
